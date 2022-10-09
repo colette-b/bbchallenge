@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 
 def get_machine_i(i, db_has_header=True):
     machine_db_path = './datafiles/all_5_states_undecided_machines_with_global_header'
@@ -26,3 +27,38 @@ def get_indices_from_index_file(index_file_path):
       machines_indices.append(int.from_bytes(chunk, byteorder="big"))
 
   return machines_indices
+
+def read_proof_file(path='./datafiles/cfl_proofs.txt'):
+    ''' proof file format:
+        each line is of the form
+        idx;n;unsat, which means an attempt with parameter n has failed, or
+        idx;n;(arr1, arr2, acc), which means a successful solution was produced. '''
+    infodict = defaultdict(dict)
+    with open(path, 'r') as f:
+        for line in f:
+            idx, n, result = line[:-1].split(';')
+            idx = int(idx)
+            n = int(n)
+            infodict[idx][n] = result
+    return infodict
+
+def is_already_solved(idx, infodict):
+    return idx in infodict and set(infodict[idx].values()) != {'unsat'}
+
+def write_to_proof_file(idx, n, data, path='./datafiles/cfl_proofs.txt'):
+    with open(path, 'a') as f:
+        f.write(f'{idx};{n};{data}\n')
+
+def proof_file_info(path='./datafiles/cfl_proofs.txt'):
+    infodict = read_proof_file(path)
+    solved = defaultdict(int)
+    for idx in infodict:
+        for n in infodict[idx]:
+            if infodict[idx][n] != 'unsat':
+                solved[n] += 1
+                break
+    print('proof info:')
+    print('total idxs considered:', len(infodict))
+    for n in solved:
+        print(f'solved with param {n=}:', solved[n])
+    print('left unsolved:        ', len(infodict) - sum(solved.values()))

@@ -4,6 +4,7 @@ from sat2_utils import *
 from cfl_dfa import *
 from db_utils import get_machine_i, get_indices_from_index_file
 import time
+import subprocess
 
 z3.set_option(verbose=1, timeout=10000)
 
@@ -58,12 +59,39 @@ def create_z3_instance(n, tm):
         for i in symbols1:
             for j in symbols2:
                 Z.add(acc[i, j, tm_halt_symb] == False)
-    # some symmetry removing conditions
-    Z.add(Or(tr[symbols1[0], symbols1[0], '1'], tr[symbols1[0], symbols1[1], '1']))
-    Z.add(Or(tr[symbols1[1], symbols1[0], '1'], tr[symbols1[1], symbols1[1], '1'], tr[symbols1[1], symbols1[2], '1']))
-    # same for symbols2
-    Z.add(Or(tr[symbols2[0], symbols2[0], '1'], tr[symbols2[0], symbols2[1], '1']))
-    Z.add(Or(tr[symbols2[1], symbols2[0], '1'], tr[symbols2[1], symbols2[1], '1'], tr[symbols2[1], symbols2[2], '1']))
+
+    # symmetry removal
+    r1 = {(i, t): Bool(f'r1_{i}_{t}') for i in symbols1 for t in range(-1, 2*n)}
+    for i in range(n):
+        Z.add(r1[symbols1[i], -1] == (i==0))
+    for i in range(n-1):
+        for t in range(-1, 2*n):
+            Z.add(Implies(r1[symbols1[i + 1], t], r1[symbols1[i], t]))
+    for i in range(n):
+        for t in range(-1, 2*n - 1):
+            Z.add(
+                r1[symbols1[i], t + 1] ==
+                Or(
+                    r1[symbols1[i], t],
+                    And(r1[symbols1[t//2], t], tr[symbols1[t//2], symbols1[i], str(t%2)])
+                )
+            )
+    # symmetry removal
+    r2 = {(i, t): Bool(f'r2_{i}_{t}') for i in symbols2 for t in range(-1, 2*n)}
+    for i in range(n):
+        Z.add(r2[symbols2[i], -1] == (i==0))
+    for i in range(n-1):
+        for t in range(-1, 2*n):
+            Z.add(Implies(r2[symbols2[i + 1], t], r2[symbols2[i], t]))
+    for i in range(n):
+        for t in range(-1, 2*n - 1):
+            Z.add(
+                r2[symbols2[i], t + 1] ==
+                Or(
+                    r2[symbols2[i], t],
+                    And(r2[symbols2[t//2], t], tr[symbols2[t//2], symbols2[i], str(t%2)])
+                )
+            )
     return Z, symbols1, symbols2, tr, acc
 
 def model_to_short_description(model, symbols1, symbols2, tr, acc):
@@ -133,7 +161,38 @@ def try_tm(n, tm, doublecheck=False):
         print('unsat')
         return False
 
+def try_tm_via_binary(n, tm, verbose=False):
+    time1 = time.time()
+    cp = subprocess.run(['./filegen', str(n), tm.code], capture_output=True)
+    time2 = time.time()
+    if verbose:
+        print('generating instance...', round(time2 - time1, 3), 's')
+    Z = Solver()
+    Z.from_string(cp.stdout)
+    get_result = Z.check()
+    time3 = time.time()
+    if verbose:
+        print('solving...............', round(time3 - time2, 3), 's')
+    if get_result == z3.sat:
+        symbols1 = [str(i) for i in range(n)]
+        symbols2 = [str(i) for i in range(n, 2*n)]
+        tr = { (i, j, b): Bool(f'tr_{i}_{j}_{b}') for i in symbols1 for j in symbols1 for b in ['0', '1'] }
+        tr.update( {(i, j, b): Bool(f'tr_{i}_{j}_{b}') for i in symbols2 for j in symbols2 for b in ['0', '1'] } )
+        acc = { (i, j, s): Bool(f'acc_{i}_{j}_{s}') for i in symbols1 for j in symbols2 for s in TM.tm_symbols }
+        model = Z.model()
+        arr1, arr2, acc_arr = model_to_short_description(model, symbols1, symbols2, tr, acc)
+        #verify_short_description(arr1, arr2, acc_arr, tm)
+        time4 = time.time()
+        if verbose:
+            print('other overhead........', round(time4 - time3, 3), 's')
+        return arr1, arr2, acc_arr
+    else:
+        if verbose:
+            print('unsat')
+        return False
+
 if __name__ == '__main__':
+    random.seed(1)
     solved = []
     unsolved = []
     all_unsolved = get_indices_from_index_file('./datafiles/bb5_undecided_index')
@@ -144,7 +203,7 @@ if __name__ == '__main__':
         tm = TM(sample_machine_code)
         print('='*40, idx, '='*40)
 
-        if try_tm(3, tm) or try_tm(4, tm) or try_tm(5, tm) or try_tm(6, tm):
+        if try_tm_via_binary(3, tm) or try_tm_via_binary(4, tm) or try_tm_via_binary(5, tm) or try_tm_via_binary(6, tm):
             solved.append(idx)
         else:
             unsolved.append(idx)
