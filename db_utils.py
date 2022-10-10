@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+import fcntl
 
 def get_machine_i(i, db_has_header=True):
     machine_db_path = './datafiles/all_5_states_undecided_machines_with_global_header'
@@ -47,7 +48,9 @@ def is_already_solved(idx, infodict):
 
 def write_to_proof_file(idx, n, data, path='./datafiles/cfl_proofs.txt'):
     with open(path, 'a') as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
         f.write(f'{idx};{n};{data}\n')
+        fcntl.flock(f, fcntl.LOCK_UN)
 
 def proof_file_info(path='./datafiles/cfl_proofs.txt'):
     infodict = read_proof_file(path)

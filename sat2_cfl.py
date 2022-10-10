@@ -161,13 +161,13 @@ def try_tm(n, tm, doublecheck=False):
         print('unsat')
         return False
 
-def try_tm_via_binary(n, tm, verbose=False):
+def try_tm_via_binary(n, tm, verbose=False, ctx=None):
     time1 = time.time()
     cp = subprocess.run(['./filegen', str(n), tm.code], capture_output=True)
     time2 = time.time()
     if verbose:
         print('generating instance...', round(time2 - time1, 3), 's')
-    Z = Solver()
+    Z = Solver(ctx=ctx)
     Z.from_string(cp.stdout)
     get_result = Z.check()
     time3 = time.time()
@@ -176,9 +176,9 @@ def try_tm_via_binary(n, tm, verbose=False):
     if get_result == z3.sat:
         symbols1 = [str(i) for i in range(n)]
         symbols2 = [str(i) for i in range(n, 2*n)]
-        tr = { (i, j, b): Bool(f'tr_{i}_{j}_{b}') for i in symbols1 for j in symbols1 for b in ['0', '1'] }
-        tr.update( {(i, j, b): Bool(f'tr_{i}_{j}_{b}') for i in symbols2 for j in symbols2 for b in ['0', '1'] } )
-        acc = { (i, j, s): Bool(f'acc_{i}_{j}_{s}') for i in symbols1 for j in symbols2 for s in TM.tm_symbols }
+        tr = { (i, j, b): Bool(f'tr_{i}_{j}_{b}', ctx=ctx) for i in symbols1 for j in symbols1 for b in ['0', '1'] }
+        tr.update( {(i, j, b): Bool(f'tr_{i}_{j}_{b}', ctx=ctx) for i in symbols2 for j in symbols2 for b in ['0', '1'] } )
+        acc = { (i, j, s): Bool(f'acc_{i}_{j}_{s}', ctx=ctx) for i in symbols1 for j in symbols2 for s in TM.tm_symbols }
         model = Z.model()
         arr1, arr2, acc_arr = model_to_short_description(model, symbols1, symbols2, tr, acc)
         #verify_short_description(arr1, arr2, acc_arr, tm)
