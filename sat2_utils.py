@@ -4,7 +4,6 @@ from pydot import Dot, Edge, Node
 from automata.fa.dfa import DFA
 from automata.fa.nfa import NFA
 from cfl_dfa import *
-from db_utils import get_machine_i, get_indices_from_index_file
 import time
 
 def model_to_mpl(model, symbols1, symbols2, tr, acc):
@@ -61,3 +60,26 @@ def sanity_check(mpl, tm):
         assert F.accepts_input(w + s + v[::-1])
         w, s, v = tm.simulation_step(w, s, v)
     print(f"first {simsize} steps are in L")
+
+def verify_short_description(arr1, arr2, acc, tm):
+    ''' verify that a description of two DFAs and 'acceptance array' gives a CFL 
+        for a given TM. This is just a double-check, as sat-solver conditions 
+        should imply all the necessary conditions. '''
+    assert arr1[0] == 0
+    assert arr2[0] == 0
+    assert '0-a-0' in acc
+    for item in acc:
+        l, s, r = item.split('-')
+        l, r = int(l), int(r)
+        new_bit, direction, new_tm_symb = tm.get_transition_info(s)
+        for b in ['0', '1']:
+            if direction == 'R':
+                for j in range(len(arr2) // 2):
+                    if arr2[2*j + int(b)] == r:
+                        corr = f'{arr1[2*l + int(new_bit)]}-{new_tm_symb.lower() if b=="0" else new_tm_symb.upper()}-{j}'
+                        assert corr in acc
+            if direction == 'L':
+                for i in range(len(arr1) // 2):
+                    if arr1[2*i + int(b)] == l:
+                        corr = f'{i}-{new_tm_symb.lower() if b=="0" else new_tm_symb.upper()}-{arr2[2*r + int(new_bit)]}'
+                        assert corr in acc

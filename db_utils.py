@@ -1,6 +1,9 @@
 import os
 from collections import defaultdict
 import fcntl
+from sat2_utils import verify_short_description
+from tm_utils import *
+from tqdm import tqdm
 
 def get_machine_i(i, db_has_header=True):
     machine_db_path = './datafiles/all_5_states_undecided_machines_with_global_header'
@@ -29,18 +32,22 @@ def get_indices_from_index_file(index_file_path):
 
   return machines_indices
 
-def read_proof_file(path='./datafiles/cfl_proofs.txt'):
+def read_proof_file(path='./datafiles/cfl_proofs.txt', verify=False):
     ''' proof file format:
         each line is of the form
         idx;n;unsat, which means an attempt with parameter n has failed, or
         idx;n;(arr1, arr2, acc), which means a successful solution was produced. '''
     infodict = defaultdict(dict)
     with open(path, 'r') as f:
-        for line in f:
+        for line in tqdm(f):
             idx, n, result = line[:-1].split(';')
             idx = int(idx)
             n = int(n)
             infodict[idx][n] = result
+            if result!='unsat' and verify:
+                arr1, arr2, acc_arr = eval(result)
+                tm_code = get_machine_i(idx)
+                verify_short_description(arr1, arr2, acc_arr, TM(tm_code))
     return infodict
 
 def is_already_solved(idx, infodict):
@@ -55,13 +62,19 @@ def write_to_proof_file(idx, n, data, path='./datafiles/cfl_proofs.txt'):
 def proof_file_info(path='./datafiles/cfl_proofs.txt'):
     infodict = read_proof_file(path)
     solved = defaultdict(int)
+    unsolved = defaultdict(int)
     for idx in infodict:
         for n in infodict[idx]:
             if infodict[idx][n] != 'unsat':
                 solved[n] += 1
                 break
+            else:
+                unsolved[n] += 1
     print('proof info:')
+    print('length of index file: ', len(get_indices_from_index_file('./datafiles/bb5_undecided_index')))
     print('total idxs considered:', len(infodict))
-    for n in solved:
-        print(f'solved with param {n=}:', solved[n])
+    counts = list(solved.items())
+    counts.sort()
+    for n, count in counts:
+        print(f'solved with param {n=}: {count}\t{unsolved[n]}\t{round(100 * count / (count + unsolved[n]), 1)} percent success rate')
     print('left unsolved:        ', len(infodict) - sum(solved.values()))
