@@ -44,6 +44,11 @@ def worker():
         q.task_done()
         time4 = time.time()
         #print(f'post\t{round(time4 - time3, 3)} s...')
+        d1 = round(time1half - time1, 3)
+        d2 = round(time2 - time1half, 3)
+        d3 = round(time3 - time2, 3)
+        d4 = round(time4 - time3, 3)
+        print(d1, '\t', d2, '\t', d3, '\t', d4, '\t', 'sat' if result else 'unsat')
 
 if __name__ == '__main__':
     all_unsolved = get_indices_from_index_file('./datafiles/bb5_undecided_index')
@@ -56,9 +61,9 @@ if __name__ == '__main__':
             continue
         q.put(idx)
     pbar = tqdm(total=q.qsize(), smoothing=0.0)
-    if args.threads == 1:
-        worker()
-    else:
-        for _ in range(args.threads):
-            threading.Thread(target=worker, daemon=True).start()
+    #if args.threads == 1:
+    #    worker()
+    #else:
+    for _ in range(args.threads):
+        threading.Thread(target=worker, daemon=True).start()
     q.join()

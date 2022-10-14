@@ -76,5 +76,5 @@ def proof_file_info(path='./datafiles/cfl_proofs.txt'):
     counts = list(solved.items())
     counts.sort()
     for n, count in counts:
-        print(f'solved with param {n=}: {count}\t{unsolved[n]}\t{round(100 * count / (count + unsolved[n]), 1)} percent success rate')
+        print(f'solved with param {n=}: {count}\tleft: {unsolved[n]}\t{round(100 * count / (count + unsolved[n]), 1)} percent success rate')
     print('left unsolved:        ', len(infodict) - sum(solved.values()))
