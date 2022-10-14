@@ -1,4 +1,5 @@
 from pysat.solvers import Glucose3, Lingeling, Glucose4, Minisat22, Cadical, Mergesat3
+from pysat.formula import CNF
 from pysat.card import *
 from tm_utils import *
 from sat2_utils import *
@@ -15,7 +16,7 @@ class IdxManager:
         self.idx += 1
         return self.idx
 
-def create_instance(n, tm):
+def create_instance(n, tm, get_formula=False):
     #chooselol = random.randint(1, 3)
     #if chooselol == 1:
     #    g = Glucose4() #Minisat22() #Mergesat3() #Cadical() #Lingeling() # Minisat22() # Glucose4()
@@ -26,9 +27,8 @@ def create_instance(n, tm):
     #if chooselol == 3:
     #    g = Cadical()
     #    print('cadical')
-    g = Minisat22()
     im = IdxManager()
-
+    F = CNF()
     symbols = [None, 
         [str(i) for i in range(n)],
         [str(i) for i in range(n, 2*n)]
@@ -44,15 +44,17 @@ def create_instance(n, tm):
     # exactly one transition
     for b in ['0', '1']:
         for i in symbols[1]:
-            g.append_formula(CardEnc.equals([tr[i, j, b] for j in symbols[1]], bound=1, encoding=EncType.pairwise))
+            for cl in CardEnc.equals([tr[i, j, b] for j in symbols[1]], bound=1, encoding=EncType.pairwise):
+                F.append(cl)
         for i in symbols[2]:
-            g.append_formula(CardEnc.equals([tr[i, j, b] for j in symbols[2]], bound=1, encoding=EncType.pairwise))
-
+            for cl in CardEnc.equals([tr[i, j, b] for j in symbols[2]], bound=1, encoding=EncType.pairwise):
+                F.append(cl)
+    
     # 'a' is accepted
-    g.add_clause([acc[symbols[1][0], symbols[2][0], 'a']])
+    F.append([acc[symbols[1][0], symbols[2][0], 'a']])
     # 0* in front and back is irrelevant
-    g.add_clause([tr[symbols[1][0], symbols[1][0], '0']])
-    g.add_clause([tr[symbols[2][0], symbols[2][0], '0']])
+    F.append([tr[symbols[1][0], symbols[1][0], '0']])
+    F.append([tr[symbols[2][0], symbols[2][0], '0']])
     # acc implications
     for s in TM.tm_symbols:
         new_bit, direction, new_tm_symb = tm.get_transition_info(s)
@@ -62,14 +64,14 @@ def create_instance(n, tm):
                     for q in symbols[2]:
                         for b in ['0', '1']:
                             if direction == 'R':
-                                g.add_clause([
+                                F.append([
                                     -tr[q_, q, b],
                                     -acc[p_, q, s],
                                     -tr[p_, p, new_bit],
                                     acc[p, q_, new_tm_symb.lower() if b=='0' else new_tm_symb.upper()]
                                 ])
                             if direction == 'L':
-                                g.add_clause([
+                                F.append([
                                     -tr[p_, p, b],
                                     -acc[p, q_, s],
                                     -tr[q_, q, new_bit],
@@ -79,15 +81,15 @@ def create_instance(n, tm):
     for tm_halt_symb in tm.final_states():
         for i in symbols[1]:
             for j in symbols[2]:
-                g.add_clause([-acc[i, j, tm_halt_symb]])
+                F.append([-acc[i, j, tm_halt_symb]])
 
     # symmetry removal
     for p in [1, 2]:
         for i in range(n):
-            g.add_clause([r[p][symbols[p][i], -1] * (1 if i==0 else -1)])
+            F.append([r[p][symbols[p][i], -1] * (1 if i==0 else -1)])
         for i in range(n-1):
             for t in range(-1, 2*n):
-                g.add_clause([
+                F.append([
                     -r[p][symbols[p][i + 1], t],
                     r[p][symbols[p][i], t]
                 ])
@@ -95,15 +97,20 @@ def create_instance(n, tm):
             for t in range(-1, 2*n - 1):
                 x, y, z1, z2 = r[p][symbols[p][i], t + 1], r[p][symbols[p][i], t], r[p][symbols[p][t//2], t], tr[symbols[p][t//2], symbols[p][i], str(t%2)]
                 # write down "x = y or (z1 and z2)"
-                g.add_clause([-y, x])
-                g.add_clause([-z1, -z2, x])
-                g.add_clause([-x, y, z1])
-                g.add_clause([-x, y, z2])
+                F.append([-y, x])
+                F.append([-z1, -z2, x])
+                F.append([-x, y, z1])
+                F.append([-x, y, z2])
 
-    return g, symbols[1], symbols[2], tr, acc
+    if get_formula:
+        return F, symbols[1], symbols[2], tr, acc
+    else:
+        g = Minisat22()
+        g.append_formula(F)
+        return g, symbols[1], symbols[2], tr, acc
 
-def model_to_short_description(g, symbols1, symbols2, tr, acc):
-    raw_model = g.get_model()
+def model_to_short_description(raw_model, symbols1, symbols2, tr, acc):
+    #raw_model = g.get_model()
     model = dict()
     for x in raw_model:
         if x < 0:
@@ -131,13 +138,13 @@ if __name__ == '__main__':
     for idx in TM_SKELET_LIST:
         sample_machine_code = get_machine_i(idx)
         tm = TM(sample_machine_code)
-        g, symbols1, symbols2, tr, acc = create_instance(12, tm)
+        g, symbols1, symbols2, tr, acc = create_instance(8, tm)
         print(idx, '   \t', end='', flush=True)
         result = g.solve()
         print(result)
         if result:
             solved.append(idx)
-            dfa1, dfa2, acc = model_to_short_description(g, symbols1, symbols2, tr, acc)
+            dfa1, dfa2, acc = model_to_short_description(g.get_model(), symbols1, symbols2, tr, acc)
             print(dfa1, dfa2, acc)
             sat2_cfl.verify_short_description(dfa1, dfa2, acc, tm)
     print(len(solved))

@@ -22,15 +22,13 @@ def get_machine_i(i, db_has_header=True):
     return s             
 
 def get_indices_from_index_file(index_file_path):
-  index_file_size = os.path.getsize(index_file_path)
-
-  machines_indices = []
-  with open(index_file_path, "rb") as f:
-    for i in range(index_file_size//4):
-      chunk = f.read(4)
-      machines_indices.append(int.from_bytes(chunk, byteorder="big"))
-
-  return machines_indices
+    index_file_size = os.path.getsize(index_file_path)
+    machines_indices = []
+    with open(index_file_path, "rb") as f:
+        for i in range(index_file_size//4):
+            chunk = f.read(4)
+            machines_indices.append(int.from_bytes(chunk, byteorder="big"))
+    return machines_indices
 
 def read_proof_file(path='./datafiles/cfl_proofs.txt', verify=False):
     ''' proof file format:
