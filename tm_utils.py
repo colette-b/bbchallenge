@@ -4,37 +4,24 @@
 # symbols = '0' or '1'
 
 class TM:
-    states = 'ABCDE'
     tm_symbols = 'aAbBcCdDeE'
 
     def __init__(self, code):
-        self.new_symbol = dict()
-        self.move_dir = dict()
-        self.new_state = dict()
-        self.code = code
-        code_fragments = code.split('_')
-        self.shortcode = code.replace('_', '')
-        for state, code_fragment in zip(TM.states, code_fragments):
-            self.new_symbol[state, '0'] = code_fragment[0]
-            self.move_dir[state, '0'] = code_fragment[1]
-            self.new_state[state, '0'] = code_fragment[2]
-            self.new_symbol[state, '1'] = code_fragment[3]
-            self.move_dir[state, '1'] = code_fragment[4]
-            self.new_state[state, '1'] = code_fragment[5]
+        # 1RZ has same function as ---
+        self.code = code.replace('1RZ', '---')
+        code_fragments = self.code.split('_')
+        self.shortcode = self.code.replace('_', '')
+        self.tm_symbols = ''
+        for i in range(self.state_count()):
+            lower = chr(ord('a') + i)
+            upper = chr(ord('A') + i)
+            self.tm_symbols += (lower + upper)
 
     def state_count(self):
-        return len(self.new_symbol)
+        return len(self.shortcode) // 6
 
     def __str__(self):
-        compact_code = ''
-        for state in TM.states:
-            for symbol in [0, 1]:
-                compact_code = compact_code + \
-                    self.new_symbol[state, symbol] + \
-                    self.move_dir[state, symbol] + \
-                    self.new_state[state, symbol] + \
-                    ('_' if symbol==1 and state!='E' else '')
-        return compact_code
+        return self.code
 
     def get_transition_info(self, symbol):
         ''' arguments: one of symbols aAbBcCdDeE
@@ -50,7 +37,7 @@ class TM:
         return x == '-'
 
     def final_states(self):
-        return [tm_symb for tm_symb in TM.tm_symbols if self.is_final(tm_symb)]
+        return [tm_symb for tm_symb in self.tm_symbols if self.is_final(tm_symb)]
 
     def simulation_step(self, left, symbol, right):
         ''' right part is always reversed '''
