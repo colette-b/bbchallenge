@@ -17,16 +17,6 @@ class IdxManager:
         return self.idx
 
 def create_instance(n, tm, get_formula=False):
-    #chooselol = random.randint(1, 3)
-    #if chooselol == 1:
-    #    g = Glucose4() #Minisat22() #Mergesat3() #Cadical() #Lingeling() # Minisat22() # Glucose4()
-    #    print('gluc')
-    #if chooselol == 2:
-    #    g = Minisat22()
-    #    print('mini')
-    #if chooselol == 3:
-    #    g = Cadical()
-    #    print('cadical')
     im = IdxManager()
     F = CNF()
     symbols = [None, 
@@ -37,7 +27,7 @@ def create_instance(n, tm, get_formula=False):
     ############# define variables
     tr = { (i, j, b): im.get() for i in symbols[1] for j in symbols[1] for b in ['0', '1'] }
     tr.update( {(i, j, b): im.get() for i in symbols[2] for j in symbols[2] for b in ['0', '1'] } )
-    acc = { (i, j, s): im.get() for i in symbols[1] for j in symbols[2] for s in TM.tm_symbols }
+    acc = { (i, j, s): im.get() for i in symbols[1] for j in symbols[2] for s in tm.tm_symbols }
     r[1] = {(i, t): im.get() for i in symbols[1] for t in range(-1, 2*n)}
     r[2] = {(i, t): im.get() for i in symbols[2] for t in range(-1, 2*n)}
 
@@ -56,7 +46,7 @@ def create_instance(n, tm, get_formula=False):
     F.append([tr[symbols[1][0], symbols[1][0], '0']])
     F.append([tr[symbols[2][0], symbols[2][0], '0']])
     # acc implications
-    for s in TM.tm_symbols:
+    for s in tm.tm_symbols:
         new_bit, direction, new_tm_symb = tm.get_transition_info(s)
         for p_ in symbols[1]:
             for p in symbols[1]:

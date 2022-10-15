@@ -29,7 +29,7 @@ class TM:
             symbol left behind '0' or '1',
             direction 'R' or 'L', 
             next state one of 'ABCDE' '''
-        idx = 'aAbBcCdDeE'.index(symbol) * 3
+        idx = self.tm_symbols.index(symbol) * 3
         return self.shortcode[idx], self.shortcode[idx + 1], self.shortcode[idx + 2]
 
     def is_final(self, tm_symb):
