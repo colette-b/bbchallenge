@@ -4,9 +4,10 @@ import fcntl
 from sat2_utils import verify_short_description
 from tm_utils import *
 from tqdm import tqdm
+from paths import MACHINES_DB_FILE, CTL_PROOF_FILE, UNDECIDED_INDEX
 
 def get_machine_i(i, db_has_header=True):
-    machine_db_path = './datafiles/all_5_states_undecided_machines_with_global_header'
+    machine_db_path = MACHINES_DB_FILE
     with open(machine_db_path, "rb") as f:
         c = 1 if db_has_header else 0
         f.seek(30*(i+c))
@@ -30,7 +31,7 @@ def get_indices_from_index_file(index_file_path):
             machines_indices.append(int.from_bytes(chunk, byteorder="big"))
     return machines_indices
 
-def read_proof_file(path='./datafiles/cfl_proofs.txt', verify=False):
+def read_proof_file(path=CTL_PROOF_FILE, verify=False):
     ''' proof file format:
         each line is of the form
         idx;n;unsat, which means an attempt with parameter n has failed, or
@@ -51,13 +52,13 @@ def read_proof_file(path='./datafiles/cfl_proofs.txt', verify=False):
 def is_already_solved(idx, infodict):
     return idx in infodict and set(infodict[idx].values()) != {'unsat'}
 
-def write_to_proof_file(idx, n, data, path='./datafiles/cfl_proofs.txt'):
+def write_to_proof_file(idx, n, data, path=CTL_PROOF_FILE):
     with open(path, 'a') as f:
         fcntl.flock(f, fcntl.LOCK_EX)
         f.write(f'{idx};{n};{data}\n')
         fcntl.flock(f, fcntl.LOCK_UN)
 
-def proof_file_info(path='./datafiles/cfl_proofs.txt'):
+def proof_file_info(path=CTL_PROOF_FILE):
     infodict = read_proof_file(path)
     solved = defaultdict(int)
     unsolved = defaultdict(int)
@@ -69,7 +70,7 @@ def proof_file_info(path='./datafiles/cfl_proofs.txt'):
             else:
                 unsolved[n] += 1
     print('proof info:')
-    print('length of index file: ', len(get_indices_from_index_file('./datafiles/bb5_undecided_index')))
+    print('length of index file: ', len(get_indices_from_index_file(UNDECIDED_INDEX)))
     print('total idxs considered:', len(infodict))
     counts = list(solved.items())
     counts.sort()

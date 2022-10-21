@@ -8,7 +8,7 @@ class TM:
 
     def __init__(self, code):
         # 1RZ has same function as ---
-        self.code = code.replace('1RZ', '---')
+        self.code = code.replace('1RZ', '---').replace('1RH', '---')
         code_fragments = self.code.split('_')
         self.shortcode = self.code.replace('_', '')
         self.tm_symbols = ''

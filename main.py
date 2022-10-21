@@ -8,54 +8,67 @@ import sat2_cfl
 from sat3_cfl import *
 from tqdm import tqdm
 from glucose_wrapper import *
+from paths import TEMPFILE_DIR, UNDECIDED_INDEX
 
 parser = argparse.ArgumentParser()
+parser.add_argument('mode', choices=['database', 'index'], default='database')
 parser.add_argument('n', type=int)
 parser.add_argument('threads', type=int)
+parser.add_argument('timeout', type=int)
+parser.add_argument('--idx', type=int)
+parser.add_argument('--machine_code')
+parser.add_argument('--instance_path')
 args = parser.parse_args()
 
+csat, cunsat, ctimeout = 0, 0, 0
 q = queue.Queue()
 pbar = None
 
 def worker():
+    global csat, cunsat, ctimeout
     while True:
         time1 = time.time()
         idx = q.get()
-        # print(f'{idx=}...')
         tm_code = get_machine_i(idx)
         time1half = time.time()
-        #print(f'init\t{round(time1half - time1, 3)} s...')
         tm = TM(tm_code)
-        #g, symbols1, symbols2, tr, acc = create_instance(args.n, tm)
         F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, get_formula=True)
         time2 = time.time()
-        #print(f'setup\t{round(time2 - time1half, 3)} s...')
-        #_result = g.solve()
-        result = run_glucose(GLUCOSE_PATH, 1, F, temp_file_path=f'./tempfiles/tempfile{threading.get_ident()}')
+        result = run_glucose(GLUCOSE_PATH, 1, F, temp_file_path=TEMPFILE_DIR + f'tempfile{threading.get_ident()}', timeout=args.timeout)
         time3 = time.time()
-        #print(f'solve\t{round(time3 - time2, 3)} s...')
-        # result = try_tm_via_binary(args.n, TM(tm_code), verbose=False, ctx=thread_ctx)
         if result:
-            #assert _result
-            arr1, arr2, acc_arr = model_to_short_description(result, symbols1, symbols2, tr, acc)
-            sat2_cfl.verify_short_description(arr1, arr2, acc_arr, tm)
-            write_to_proof_file(idx, args.n, f'{(arr1, arr2, acc_arr)}')
+            if result != 'timeout':
+                arr1, arr2, acc_arr = model_to_short_description(result, symbols1, symbols2, tr, acc)
+                sat2_cfl.verify_short_description(arr1, arr2, acc_arr, tm)
+                write_to_proof_file(idx, args.n, f'{(arr1, arr2, acc_arr)}')
         else:
-            #assert not _result
             write_to_proof_file(idx, args.n, 'unsat')
-        #g.delete()
         pbar.update(1)
         q.task_done()
         time4 = time.time()
-        #print(f'post\t{round(time4 - time3, 3)} s...')
         d1 = round(time1half - time1, 3)
         d2 = round(time2 - time1half, 3)
         d3 = round(time3 - time2, 3)
         d4 = round(time4 - time3, 3)
-        print(d1, '\t', d2, '\t', d3, '\t', d4, '\t', 'sat' if result else 'unsat')
+        if result == 'timeout':
+            verdict = 'timeout'
+            ctimeout += 1
+        elif result:
+            verdict = '    sat'
+            csat += 1
+        else:
+            verdict = '  unsat'
+            cunsat += 1
+        print('{:10d}'.format(idx), '\t', '{:5.2f}'.format(d1), '\t', '{:5.2f}'.format(d2), '\t', \
+            '{:5.2f}'.format(d3), '\t', '{:5.2f}'.format(d4), '\t', verdict, \
+            '{:5d}'.format(csat), \
+            '{:5d}'.format(cunsat), \
+            '{:5d}'.format(ctimeout)
+        )
 
-if __name__ == '__main__':
-    all_unsolved = get_indices_from_index_file('./datafiles/bb5_undecided_index')
+def mode_database():
+    global pbar
+    all_unsolved = get_indices_from_index_file(UNDECIDED_INDEX)
     infodict = read_proof_file()
     proof_file_info()
     random.shuffle(all_unsolved)
@@ -69,3 +82,24 @@ if __name__ == '__main__':
     for _ in range(args.threads):
         threading.Thread(target=worker, daemon=True).start()
     q.join()
+
+def mode_idx():
+    if args.idx:
+        tm_code = get_machine_i(args.idx)
+    else:
+        tm_code = args.machine_code
+    print(tm_code)
+    tm = TM(tm_code)
+    F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, get_formula=True)
+    if args.instance_path:
+        with open(args.instance_path, 'w') as fil:
+            F.to_fp(fil)
+        print(f'written instance to file {args.instance_path}')
+
+if __name__ == '__main__':
+    print(args)
+    if args.mode == 'database':
+        mode_database()
+    if args.mode == 'index':
+        mode_idx()
+

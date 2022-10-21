@@ -14,6 +14,7 @@ def create_z3_instance(n, tm):
     symbols1 = [str(i) for i in range(n)]
     symbols2 = [str(i) for i in range(n, 2*n)]
     ############# define two DFAs
+    ### tr(i, j, b) = True if DFA has edge i -b-> j
     tr = { (i, j, b): Bool(f'tr_{i}_{j}_{b}') for i in symbols1 for j in symbols1 for b in ['0', '1'] }
     tr.update( {(i, j, b): Bool(f'tr_{i}_{j}_{b}') for i in symbols2 for j in symbols2 for b in ['0', '1'] } )
     # exactly one transition
