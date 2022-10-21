@@ -100,14 +100,12 @@ def create_instance(n, tm, get_formula=False):
         return g, symbols[1], symbols[2], tr, acc
 
 def model_to_short_description(raw_model, symbols1, symbols2, tr, acc):
-    #raw_model = g.get_model()
     model = dict()
     for x in raw_model:
         if x < 0:
             model[-x] = False
         else:
             model[x] = True
-    #print(model)
     dfa_arr1 = []
     for i in range(len(symbols1)):
         dfa_arr1.append([j for j in range(len(symbols1)) if model[tr[symbols1[i], symbols1[j], '0']]][0])
@@ -122,20 +120,3 @@ def model_to_short_description(raw_model, symbols1, symbols2, tr, acc):
             continue
         acc_arr.append(i + '-' + s + '-' + str(symbols2.index(j)))
     return dfa_arr1, dfa_arr2, acc_arr
-
-if __name__ == '__main__':
-    solved = []
-    for idx in TM_SKELET_LIST:
-        sample_machine_code = get_machine_i(idx)
-        tm = TM(sample_machine_code)
-        g, symbols1, symbols2, tr, acc = create_instance(8, tm)
-        print(idx, '   \t', end='', flush=True)
-        result = g.solve()
-        print(result)
-        if result:
-            solved.append(idx)
-            dfa1, dfa2, acc = model_to_short_description(g.get_model(), symbols1, symbols2, tr, acc)
-            print(dfa1, dfa2, acc)
-            sat2_cfl.verify_short_description(dfa1, dfa2, acc, tm)
-    print(len(solved))
-    print(solved)
