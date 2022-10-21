@@ -24,14 +24,14 @@ def create_z3_instance(n, tm):
         for i in symbols2:
             Z.add(PbEq([(tr[i, j, b], 1) for j in symbols2], 1))
 
-    acc = { (i, j, s): Bool(f'acc_{i}_{j}_{s}') for i in symbols1 for j in symbols2 for s in TM.tm_symbols }
+    acc = { (i, j, s): Bool(f'acc_{i}_{j}_{s}') for i in symbols1 for j in symbols2 for s in tm.tm_symbols }
     # 'a' is accepted
     Z.add(acc[symbols1[0], symbols2[0], 'a'] == True)
     # 0* in front and back is irrelevant
     Z.add(tr[symbols1[0], symbols1[0], '0'] == True)
     Z.add(tr[symbols2[0], symbols2[0], '0'] == True)
     # acc implications
-    for s in TM.tm_symbols:
+    for s in tm.tm_symbols:
         new_bit, direction, new_tm_symb = tm.get_transition_info(s)
         for p_ in symbols1:
             for p in symbols1:
@@ -158,7 +158,7 @@ def try_tm_via_binary(n, tm, verbose=False, ctx=None):
         symbols2 = [str(i) for i in range(n, 2*n)]
         tr = { (i, j, b): Bool(f'tr_{i}_{j}_{b}', ctx=ctx) for i in symbols1 for j in symbols1 for b in ['0', '1'] }
         tr.update( {(i, j, b): Bool(f'tr_{i}_{j}_{b}', ctx=ctx) for i in symbols2 for j in symbols2 for b in ['0', '1'] } )
-        acc = { (i, j, s): Bool(f'acc_{i}_{j}_{s}', ctx=ctx) for i in symbols1 for j in symbols2 for s in TM.tm_symbols }
+        acc = { (i, j, s): Bool(f'acc_{i}_{j}_{s}', ctx=ctx) for i in symbols1 for j in symbols2 for s in tm.tm_symbols }
         model = Z.model()
         arr1, arr2, acc_arr = model_to_short_description(model, symbols1, symbols2, tr, acc)
         #verify_short_description(arr1, arr2, acc_arr, tm)

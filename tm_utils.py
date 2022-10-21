@@ -4,8 +4,6 @@
 # symbols = '0' or '1'
 
 class TM:
-    tm_symbols = 'aAbBcCdDeE'
-
     def __init__(self, code):
         # 1RZ has same function as ---
         self.code = code.replace('1RZ', '---').replace('1RH', '---')
