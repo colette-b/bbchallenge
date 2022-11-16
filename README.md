@@ -1,3 +1,5 @@
+# this repository is a huge mess
+
 # Closed Tape Language solver
 
 Based on `https://github.com/UncombedCoconut/bbchallenge/blob/main/dumb_dfa_decider.py` idea,

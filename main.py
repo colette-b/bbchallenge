@@ -4,11 +4,12 @@ import queue
 import time
 import random
 from db_utils import *
-import sat2_cfl
+import sat2_utils
 from sat3_cfl import *
 from tqdm import tqdm
 from glucose_wrapper import *
 from paths import TEMPFILE_DIR, UNDECIDED_INDEX
+from test2 import analyze
 
 parser = argparse.ArgumentParser()
 parser.add_argument('mode', choices=['database', 'index'], default='database')
@@ -18,6 +19,8 @@ parser.add_argument('timeout', type=int)
 parser.add_argument('--idx', type=int)
 parser.add_argument('--machine_code')
 parser.add_argument('--instance_path')
+parser.add_argument('--additional_acc')
+parser.add_argument('--prooftype', default='vanilla')
 args = parser.parse_args()
 
 csat, cunsat, ctimeout = 0, 0, 0
@@ -39,7 +42,7 @@ def worker():
         if result:
             if result != 'timeout':
                 arr1, arr2, acc_arr = model_to_short_description(result, symbols1, symbols2, tr, acc)
-                sat2_cfl.verify_short_description(arr1, arr2, acc_arr, tm)
+                sat2_utils.verify_short_description(arr1, arr2, acc_arr, tm)
                 write_to_proof_file(idx, args.n, f'{(arr1, arr2, acc_arr)}')
         else:
             write_to_proof_file(idx, args.n, 'unsat')
@@ -90,7 +93,19 @@ def mode_idx():
         tm_code = args.machine_code
     print(tm_code)
     tm = TM(tm_code)
-    F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, get_formula=True)
+    #L1 = [] # [[''], ['1']]
+    #L2 = [] # [[''], ['1']]
+    #L1, L2 = analyze(tm)
+    #print(f'{L1=}')
+    #print(f'{L2=}')
+    #print(f'{len(L1)=}')
+    #print(f'{len(L2)=}')
+    #F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, get_formula=True, wordheurestics=(L1, L2), mode=args.prooftype)
+    if args.additional_acc:
+        additional_acc = eval(args.additional_acc)
+    else:
+        additional_acc = []
+    F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, get_formula=True, additional_acc=additional_acc, mode=args.prooftype)
     if args.instance_path:
         with open(args.instance_path, 'w') as fil:
             F.to_fp(fil)
