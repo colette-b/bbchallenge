@@ -20,55 +20,71 @@ class TM:
             self.code = code.replace('1RH', '---')
 
         code_fragments = self.code.split('_')
-        self.__tape_symbol_count = len(code_fragments[0]) / 3
-        self.__state_count = len(code_fragments)
-        self.shortcode = self.code.replace('_', '')
+        self.tape_symbol_count = len(code_fragments[0]) // 3
+        self.tm_state_count = len(code_fragments)
+        self.__tm_states = ''.join(chr(ord('A') + i) for i in range(self.tm_state_count))
+        self.__tape_symbols = ''.join(chr(ord('0') + i) for i in range(self.tape_symbol_count))
         self.tm_symbols = ''
-        for i in range(self.state_count()):
+        for i in range(self.tm_state_count):
             lower = chr(ord('a') + i)
             upper = chr(ord('A') + i)
             self.tm_symbols += (lower + upper)
 
-    def state_count(self):
-        return self.__state_count
-    
-    def tape_symbol_count(self):
-        return self.__tape_symbol_count
-
     def __str__(self):
         return self.code
 
-    def get_transition_info(self, symbol, tm_symb=None):
-        ''' arguments: one of symbols aAbBcCdDeE
-            return value: 
-            symbol left behind '0' or '1',
-            direction 'R' or 'L', 
-            next state one of 'ABCDE' '''
-        try:
-            idx = self.tm_symbols.index(symbol) * 3
-        except:
-            print(f'got symbol {symbol}')
-            raise Exception()
-        return self.shortcode[idx], self.shortcode[idx + 1], self.shortcode[idx + 2]
+    def parse_combo_state(self, *args):
+        ''' parses a combo state, which can be
+            - lower/upper case a/A
+            - tm_symbol followed by tape_symbol A0 A1 B0
+            - a pair ('A', '0')
+            and returns the last representation '''
+        if len(args) == 2:
+            tm_state, tape_symbol = args
+        if len(args) == 1:
+            combo_symbol = args[0]
+            if len(combo_symbol) == 1:
+                assert self.tape_symbol_count == 2
+                tm_state = combo_symbol.upper()
+                tape_symbol = '0' if combo_symbol.islower() else '1'
+            else:
+                tm_state, tape_symbol = combo_symbol[0], combo_symbol[1]
+        assert tm_state in self.__tm_states
+        assert tape_symbol in self.__tape_symbols
+        return tm_state, tape_symbol
 
-    def is_final(self, tm_symb):
-        x, _, _ = self.get_transition_info(tm_symb)
-        return x == '-'
+    def get_transition_info(self, *args):
+        ''' arguments: tm_state and tape_symbol,
+            return value: 
+            new_tape_symbol,
+            new_direction,
+            new_tm_state '''
+        tm_state, tape_symbol = self.parse_combo_state(*args)
+        idx = self.__tm_states.index(tm_state) * (3 * self.tape_symbol_count + 1) + \
+                self.__tape_symbols.index(tape_symbol) * 3
+        return self.code[idx], self.code[idx + 1], self.code[idx + 2]
+
+    def is_final(self, *args):
+        tm_state, tape_symbol = self.parse_combo_state(*args)
+        return self.get_transition_info(tm_state, tape_symbol) == ('-', '-', '-')
 
     def final_states(self):
-        return [tm_symb for tm_symb in self.tm_symbols if self.is_final(tm_symb)]
+        return [(tm_state, tape_symbol)
+            for tm_state in self.tm_symbols 
+            for tape_symbol in self.tape_symbols
+            if self.is_final(tm_state, tape_symbol)]
 
     def simulation_step(self, left, symbol, right):
         ''' right part is always reversed '''
-        b, direction, s = self.get_transition_info(symbol)
-        if direction == 'R':
+        new_tape_symb, new_direction, new_tm_state = self.get_transition_info(symbol)
+        if new_direction == 'R':
             if right == '':
                 right = '0'
-            return left + b, (s.upper() if right[-1]=='1' else s.lower()), right[:-1]
-        if direction == 'L':
+            return left + new_tape_symb, (new_tm_state, right[-1]), right[:-1]
+        if new_direction == 'L':
             if left == '':
                 left = '0'
-            return left[:-1], (s.upper() if left[-1]=='1' else s.lower()), right + b
+            return left[:-1], (new_tm_state, left[-1]), right + new_tape_symb
 
     def simulation_multiple_steps(self, _left, _symbol, _right, maxsteps):
         left = copy.deepcopy(_left)
@@ -79,47 +95,3 @@ class TM:
                 return left, symbol, right, i
             left, symbol, right = self.simulation_step(left, symbol, right)
         return left, symbol, right, maxsteps
-
-TM_SKELET_LIST = [68329601,
-55767995,
-5950405,
-6897876,
-60581745,
-58211439,
-7196989,
-7728246,
-12554268,
-3810716,
-3810169,
-4982511,
-7566785,
-31357173,
-2204428,
-20569060,
-1365166,
-15439451,
-14536286,
-347505,
-9980689,
-45615747,
-6237150,
-60658955,
-47260245,
-13134219,
-7163434,
-5657318,
-6626162,
-4986661,
-56967673,
-6957734,
-11896833,
-11896832,
-11896831,
-13609549,
-7512832,
-35771936,
-9914965,
-3841616,
-5915217,
-57874080,
-5878998]
