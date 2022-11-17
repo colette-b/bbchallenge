@@ -9,6 +9,7 @@
     1RB0RB2RC_1RC2LA0LB_1RB---2RA
 '''
 import copy
+import math
 
 class TM:
     def __init__(self, code):
@@ -74,9 +75,9 @@ class TM:
             for tape_symbol in self.tape_symbols
             if self.is_final(tm_state, tape_symbol)]
 
-    def simulation_step(self, left, symbol, right):
+    def simulation_step(self, left, combo_state, right):
         ''' right part is always reversed '''
-        new_tape_symb, new_direction, new_tm_state = self.get_transition_info(symbol)
+        new_tape_symb, new_direction, new_tm_state = self.get_transition_info(combo_state)
         if new_direction == 'R':
             if right == '':
                 right = '0'
@@ -95,3 +96,39 @@ class TM:
                 return left, symbol, right, i
             left, symbol, right = self.simulation_step(left, symbol, right)
         return left, symbol, right, maxsteps
+
+    def tm_trace_to_image(self, pathname, width=600, height=10000, origin=0.5, _left_tape='', _right_tape='', _combo_state=('A', '0')):
+        left_tape = copy.deepcopy(_left_tape)
+        combo_state = copy.deepcopy(_combo_state)
+        right_tape = copy.deepcopy(_right_tape)
+        from PIL import Image
+        img = Image.new('RGB', (width, height), color = 'black')
+        pixels = img.load()
+        color_map = { \
+            '0': (0, 0, 0), \
+            '1': (255, 255, 255), \
+            '2': (128, 128, 128), \
+            '3': (64, 64, 64), \
+            '4': (191, 191, 191) \
+        }
+        letter_color_map = {
+            'A': (255, 0, 0), \
+            'B': (255, 127, 0), \
+            'C': (0, 0, 255), \
+            'D': (0, 255, 0), \
+            'E': (255, 0, 255) \
+        }
+        alignment = math.floor(width * origin)
+        for row in range(height):
+            for i in range(max(0, alignment - len(left_tape)), alignment):
+                pixels[i, row] = color_map[left_tape[i - alignment + len(left_tape)]]
+            pixels[alignment, row] = letter_color_map[combo_state[0]]
+            for i in range(alignment + 1, min(alignment + len(right_tape) + 1, width)):
+                pixels[i, row] = color_map[right_tape[- i + alignment]]
+            new_direction = self.get_transition_info(combo_state)[1]
+            alignment += (1 if new_direction=='R' else -1)
+            if self.is_final(combo_state):
+                break
+            left_tape, combo_state, right_tape = self.simulation_step(left_tape, combo_state, right_tape)
+        img = img.resize((width, 1000), Image.NEAREST)
+        img.save(pathname)
