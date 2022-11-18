@@ -23,13 +23,9 @@ class TM:
         code_fragments = self.code.split('_')
         self.tape_symbol_count = len(code_fragments[0]) // 3
         self.tm_state_count = len(code_fragments)
-        self.__tm_states = ''.join(chr(ord('A') + i) for i in range(self.tm_state_count))
-        self.__tape_symbols = ''.join(chr(ord('0') + i) for i in range(self.tape_symbol_count))
-        self.tm_symbols = ''
-        for i in range(self.tm_state_count):
-            lower = chr(ord('a') + i)
-            upper = chr(ord('A') + i)
-            self.tm_symbols += (lower + upper)
+        self.tm_states = ''.join(chr(ord('A') + i) for i in range(self.tm_state_count))
+        self.tape_symbols = ''.join(chr(ord('0') + i) for i in range(self.tape_symbol_count))
+        self.combo_symbols = [(tm_state, tape_symbol) for tm_state in self.tm_states for tape_symbol in self.tape_symbols]
 
     def __str__(self):
         return self.code
@@ -50,8 +46,8 @@ class TM:
                 tape_symbol = '0' if combo_symbol.islower() else '1'
             else:
                 tm_state, tape_symbol = combo_symbol[0], combo_symbol[1]
-        assert tm_state in self.__tm_states
-        assert tape_symbol in self.__tape_symbols
+        assert tm_state in self.tm_states, f'{tm_state=}'
+        assert tape_symbol in self.tape_symbols
         return tm_state, tape_symbol
 
     def get_transition_info(self, *args):
@@ -61,8 +57,8 @@ class TM:
             new_direction,
             new_tm_state '''
         tm_state, tape_symbol = self.parse_combo_state(*args)
-        idx = self.__tm_states.index(tm_state) * (3 * self.tape_symbol_count + 1) + \
-                self.__tape_symbols.index(tape_symbol) * 3
+        idx = self.tm_states.index(tm_state) * (3 * self.tape_symbol_count + 1) + \
+                self.tape_symbols.index(tape_symbol) * 3
         return self.code[idx], self.code[idx + 1], self.code[idx + 2]
 
     def is_final(self, *args):
@@ -71,7 +67,7 @@ class TM:
 
     def final_states(self):
         return [(tm_state, tape_symbol)
-            for tm_state in self.tm_symbols 
+            for tm_state in self.tm_states 
             for tape_symbol in self.tape_symbols
             if self.is_final(tm_state, tape_symbol)]
 

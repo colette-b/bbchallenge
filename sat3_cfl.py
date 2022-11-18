@@ -50,14 +50,14 @@ def create_instance(n, tm, get_formula=False, wordheurestics=([], []), additiona
         ]
     r = dict()
     # define variables
-    tr = { (i, j, b): im.get() for i in symbols[1] for j in symbols[1] for b in ['0', '1'] }
-    tr.update( {(i, j, b): im.get() for i in symbols[2] for j in symbols[2] for b in ['0', '1'] } )
-    acc = { (i, j, s): im.get() for i in symbols[1] for j in symbols[2] for s in tm.tm_symbols }
+    tr = { (i, j, b): im.get() for i in symbols[1] for j in symbols[1] for b in tm.tape_symbols }
+    tr.update( {(i, j, b): im.get() for i in symbols[2] for j in symbols[2] for b in tm.tape_symbols } )
+    acc = { (i, j, s): im.get() for i in symbols[1] for j in symbols[2] for s in tm.combo_symbols }
     r[1] = {(i, t): im.get() for i in symbols[1] for t in range(-1, 2*n)}
     r[2] = {(i, t): im.get() for i in symbols[2] for t in range(-1, 2*n)}
 
     # exactly one transition
-    for b in ['0', '1']:
+    for b in tm.tape_symbols:
         for i in symbols[1]:
             for cl in CardEnc.equals([tr[i, j, b] for j in symbols[1]], bound=1, encoding=EncType.pairwise):
                 F.append(cl)
@@ -88,8 +88,8 @@ def create_instance(n, tm, get_formula=False, wordheurestics=([], []), additiona
     F.append([tr[symbols[1][0], symbols[1][0], '0']])
     F.append([tr[symbols[2][0], symbols[2][0], '0']])
 
-    # 'a' is accepted
-    F.append([mode_coef * acc[symbols[1][0], symbols[2][0], 'a']])
+    # 'A0' is accepted
+    F.append([mode_coef * acc[symbols[1][0], symbols[2][0], ('A', '0')]])
     # tm_halt_symb is never reached
     for tm_halt_symb in tm.final_states():
         for i in symbols[1]:
@@ -97,26 +97,26 @@ def create_instance(n, tm, get_formula=False, wordheurestics=([], []), additiona
                 F.append([-mode_coef * acc[i, j, tm_halt_symb]])
 
     # acc implications
-    for s in tm.tm_symbols:
+    for s in tm.combo_symbols:
         new_bit, direction, new_tm_symb = tm.get_transition_info(s)
         for p_ in symbols[1]:
             for p in symbols[1]:
                 for q_ in symbols[2]:
                     for q in symbols[2]:
-                        for b in ['0', '1']:
+                        for b in tm.tape_symbols:
                             if direction == 'R':
                                 F.append([
                                     -tr[q_, q, b],
                                     - mode_coef * acc[p_, q, s],
                                     -tr[p_, p, new_bit],
-                                    mode_coef * acc[p, q_, new_tm_symb.lower() if b=='0' else new_tm_symb.upper()]
+                                    mode_coef * acc[p, q_, (new_tm_symb, b)]
                                 ])
                             if direction == 'L':
                                 F.append([
                                     -tr[p_, p, b],
                                     - mode_coef * acc[p, q_, s],
                                     -tr[q_, q, new_bit],
-                                    mode_coef * acc[p_, q, new_tm_symb.lower() if b=='0' else new_tm_symb.upper()]
+                                    mode_coef * acc[p_, q, (new_tm_symb, b)]
                                 ])
 
     '''
