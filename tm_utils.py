@@ -93,7 +93,7 @@ class TM:
             left, symbol, right = self.simulation_step(left, symbol, right)
         return left, symbol, right, maxsteps
 
-    def tm_trace_to_image(self, pathname, width=600, height=10000, origin=0.5, _left_tape='', _right_tape='', _combo_state=('A', '0')):
+    def make_image(self, pathname, width=600, height=10000, origin=0.5, _left_tape='', _right_tape='', _combo_state=('A', '0')):
         left_tape = copy.deepcopy(_left_tape)
         combo_state = copy.deepcopy(_combo_state)
         right_tape = copy.deepcopy(_right_tape)

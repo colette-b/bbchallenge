@@ -37,7 +37,7 @@ def worker():
         tm = TM(tm_code)
         F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, get_formula=True)
         time2 = time.time()
-        result = run_glucose(GLUCOSE_PATH, 1, F, temp_file_path=TEMPFILE_DIR + f'tempfile{threading.get_ident()}', timeout=args.timeout)
+        result = run_glucose(GLUCOSE_PATH, 1, F, timeout=args.timeout)
         time3 = time.time()
         if result:
             if result != 'timeout':

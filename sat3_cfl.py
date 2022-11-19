@@ -38,10 +38,9 @@ def op_or(idxmanager, cnf, variables):
     else:
         return op_or(idxmanager, cnf, [op_or(idxmanager, cnf, [variables[0], variables[1]])] + variables[2:])
 
-def create_instance(n, tm, get_formula=False, wordheurestics=([], []), additional_acc=[], mode='vanilla'):
+def create_instance(n, tm, get_formula=False, accepted_start_configs=[('', ('A', '0'), '')]):
     ''' mode='vanilla' for the usual CTL,
         mode='coctl' for coCTL '''
-    mode_coef = 1 if mode=='vanilla' else -1
     im = IdxManager()
     F = CNF()
     symbols = [None, 
@@ -89,12 +88,12 @@ def create_instance(n, tm, get_formula=False, wordheurestics=([], []), additiona
     F.append([tr[symbols[2][0], symbols[2][0], '0']])
 
     # 'A0' is accepted
-    F.append([mode_coef * acc[symbols[1][0], symbols[2][0], ('A', '0')]])
+    F.append([acc[symbols[1][0], symbols[2][0], ('A', '0')]])
     # tm_halt_symb is never reached
     for tm_halt_symb in tm.final_states():
         for i in symbols[1]:
             for j in symbols[2]:
-                F.append([-mode_coef * acc[i, j, tm_halt_symb]])
+                F.append([-acc[i, j, tm_halt_symb]])
 
     # acc implications
     for s in tm.combo_symbols:
@@ -107,46 +106,22 @@ def create_instance(n, tm, get_formula=False, wordheurestics=([], []), additiona
                             if direction == 'R':
                                 F.append([
                                     -tr[q_, q, b],
-                                    - mode_coef * acc[p_, q, s],
+                                    - acc[p_, q, s],
                                     -tr[p_, p, new_bit],
-                                    mode_coef * acc[p, q_, (new_tm_symb, b)]
+                                    acc[p, q_, (new_tm_symb, b)]
                                 ])
                             if direction == 'L':
                                 F.append([
                                     -tr[p_, p, b],
-                                    - mode_coef * acc[p, q_, s],
+                                    - acc[p, q_, s],
                                     -tr[q_, q, new_bit],
-                                    mode_coef * acc[p_, q, (new_tm_symb, b)]
+                                    acc[p_, q, (new_tm_symb, b)]
                                 ])
-
-    '''
-    # word heurestics
-    s = dict()
-    for side in [1, 2]:
-        allwords = wordheurestics[side - 1]
-        awflat = [x for kk in allwords for x in kk]
-        awflat.sort(key=lambda w: len(w))
-        for j in symbols[side]:
-            s['', j] = im.get()
-            F.append([s['', j]] if j==symbols[side][0] else [-s['', j]])
-        for w in awflat:
-            if w == '':
-                continue
-            wp = w[:-1]
-            for j in symbols[side]:
-                s[w, j] = op_or(im, F, [op_and(im, F, [s[wp, jp], tr[jp, j, w[-1]]]) for jp in symbols[side]])
-        for i in range(len(allwords)):
-            for j in range(i + 1, len(allwords)):
-                for w in allwords[i]:
-                    for wp in allwords[j]:
-                        for sym in symbols[side]:
-                            F.append([-s[w, sym], -s[wp, sym]])
-    '''
 
     # additional_acc
     s_left, s_right = dict(), dict()
-    lefts = set(item[0] for item in additional_acc)
-    rights = set(item[2] for item in additional_acc)
+    lefts = set(item[0] for item in accepted_start_configs[0])
+    rights = set(item[2] for item in accepted_start_configs[2])
     def fill_with_prefixes(wordset):
         def search(w):
             if len(w) == 0 or w[:-1] in wordset:
@@ -169,13 +144,13 @@ def create_instance(n, tm, get_formula=False, wordheurestics=([], []), additiona
             wp = w[:-1]
             for j in vertices:
                 s_[w, j] = op_or(im, F, [op_and(im, F, [s_[wp, jp], tr[jp, j, w[-1]]]) for jp in vertices])
-    for left, tm_symb, right in additional_acc:
+    for left, combo_symbol, right in accepted_start_configs:
         this_accepted = op_or(im, F, [
             op_and(im, F, 
                 [
                     s_left[left, i],
                     s_right[right, j],
-                    acc[i, j, tm_symb]
+                    acc[i, j, combo_symbol]
                 ]
             )
             for i in symbols[1] for j in symbols[2]
@@ -189,6 +164,14 @@ def create_instance(n, tm, get_formula=False, wordheurestics=([], []), additiona
         g.append_formula(F)
         return g, symbols[1], symbols[2], tr, acc
 
+
+
+
+
+
+
+
+'''
 def model_to_short_description(raw_model, symbols1, symbols2, tr, acc):
     model = dict()
     for x in raw_model:
@@ -210,3 +193,4 @@ def model_to_short_description(raw_model, symbols1, symbols2, tr, acc):
             continue
         acc_arr.append(i + '-' + s + '-' + str(symbols2.index(j)))
     return dfa_arr1, dfa_arr2, acc_arr
+'''

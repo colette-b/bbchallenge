@@ -3,3 +3,5 @@ TEMPFILE_DIR = './tempfiles/'
 UNDECIDED_INDEX = './datafiles/bb5_undecided_index'
 MACHINES_DB_FILE = './datafiles/all_5_states_undecided_machines_with_global_header'
 CTL_PROOF_FILE = './datafiles/cfl_proofs.txt'
+
+assert TEMPFILE_DIR[-1] == '/'

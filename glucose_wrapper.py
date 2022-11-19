@@ -2,14 +2,15 @@ import subprocess
 import os
 import threading
 from sat3_cfl import *
-from paths import GLUCOSE_PATH
+from paths import GLUCOSE_PATH, TEMPFILE_DIR
 
-def run_glucose(glucose_path, nthreads, F, temp_file_path, timeout=1e9):
+def run_glucose(glucose_path, nthreads, formula, timeout=1e9):
+    temp_file_path = f'{TEMPFILE_DIR}temp{random.randint(0, 10**20)}.txt'
     os.mkfifo(temp_file_path)
     result = []
     def thread1():
         with open(temp_file_path, 'w') as fil:
-            F.to_fp(fil)
+            formula.to_fp(fil)
     def thread2():
         try:
             cp = subprocess.run([GLUCOSE_PATH, f'-nthreads={nthreads}', '-model', temp_file_path], capture_output=True, timeout=timeout)
