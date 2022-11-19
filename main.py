@@ -35,9 +35,9 @@ def worker():
         tm_code = get_machine_i(idx)
         time1half = time.time()
         tm = TM(tm_code)
-        F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, get_formula=True)
+        F, symbols1, symbols2, tr, acc = create_instance(args.n, tm)
         time2 = time.time()
-        result = run_glucose(GLUCOSE_PATH, 1, F, timeout=args.timeout)
+        result = run_glucose(1, F, timeout=args.timeout)
         time3 = time.time()
         if result:
             if result != 'timeout':
@@ -100,12 +100,12 @@ def mode_idx():
     #print(f'{L2=}')
     #print(f'{len(L1)=}')
     #print(f'{len(L2)=}')
-    #F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, get_formula=True, wordheurestics=(L1, L2), mode=args.prooftype)
+    #F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, wordheurestics=(L1, L2), mode=args.prooftype)
     if args.additional_acc:
         additional_acc = eval(args.additional_acc)
     else:
         additional_acc = []
-    F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, get_formula=True, additional_acc=additional_acc, mode=args.prooftype)
+    F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, additional_acc=additional_acc, mode=args.prooftype)
     if args.instance_path:
         with open(args.instance_path, 'w') as fil:
             F.to_fp(fil)

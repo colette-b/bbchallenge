@@ -6,6 +6,7 @@ from sat2_utils import *
 from cfl_dfa import *
 from db_utils import get_machine_i, get_indices_from_index_file
 import random
+from glucose_wrapper import run_glucose
 
 class IdxManager:
     def __init__(self):
@@ -38,7 +39,7 @@ def op_or(idxmanager, cnf, variables):
     else:
         return op_or(idxmanager, cnf, [op_or(idxmanager, cnf, [variables[0], variables[1]])] + variables[2:])
 
-def create_instance(n, tm, get_formula=False, accepted_start_configs=[('', ('A', '0'), '')]):
+def create_instance(n, tm, accepted_start_configs=[('', ('A', '0'), '')]):
     ''' mode='vanilla' for the usual CTL,
         mode='coctl' for coCTL '''
     im = IdxManager()
@@ -120,8 +121,8 @@ def create_instance(n, tm, get_formula=False, accepted_start_configs=[('', ('A',
 
     # additional_acc
     s_left, s_right = dict(), dict()
-    lefts = set(item[0] for item in accepted_start_configs[0])
-    rights = set(item[2] for item in accepted_start_configs[2])
+    lefts = set(item[0] for item in accepted_start_configs)
+    rights = set(item[2] for item in accepted_start_configs)
     def fill_with_prefixes(wordset):
         def search(w):
             if len(w) == 0 or w[:-1] in wordset:
@@ -157,19 +158,23 @@ def create_instance(n, tm, get_formula=False, accepted_start_configs=[('', ('A',
         ])
         F.append([this_accepted])
 
-    if get_formula:
-        return F, symbols[1], symbols[2], tr, acc
-    else:
-        g = Minisat22()
-        g.append_formula(F)
-        return g, symbols[1], symbols[2], tr, acc
+    return F, symbols[1], symbols[2], tr, acc
 
+def check_if_solved(n, tm):
+    F, symbols1, symbols1, tr, acc = create_instance(n, tm)
+    ret = run_glucose(1, F)
+    return type(ret) is list
 
-
-
-
-
-
+if __name__ == '__main__':
+    from db_utils import get_machine_i
+    from glucose_wrapper import *
+    idx = 3369312
+    tm = TM(get_machine_i(idx))
+    F, symbols1, symbols1, tr, acc = create_instance(4, tm)
+    print('OK')
+    #with open('./instance.txt', 'w') as fil:
+    #    F.to_fp(fil)
+    ret = run_glucose(1, F)
 
 '''
 def model_to_short_description(raw_model, symbols1, symbols2, tr, acc):

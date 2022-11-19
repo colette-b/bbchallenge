@@ -1,11 +1,11 @@
 import subprocess
 import os
 import threading
-from sat3_cfl import *
+import random
 from paths import GLUCOSE_PATH, TEMPFILE_DIR
 
-def run_glucose(glucose_path, nthreads, formula, timeout=1e9):
-    temp_file_path = f'{TEMPFILE_DIR}temp{random.randint(0, 10**20)}.txt'
+def run_glucose(nthreads, formula, glucose_path=GLUCOSE_PATH, timeout=2e6):
+    temp_file_path = f'{TEMPFILE_DIR}temp{random.randint(0, 10**10)}.txt'
     os.mkfifo(temp_file_path)
     result = []
     def thread1():
@@ -13,7 +13,7 @@ def run_glucose(glucose_path, nthreads, formula, timeout=1e9):
             formula.to_fp(fil)
     def thread2():
         try:
-            cp = subprocess.run([GLUCOSE_PATH, f'-nthreads={nthreads}', '-model', temp_file_path], capture_output=True, timeout=timeout)
+            cp = subprocess.run([glucose_path, f'-nthreads={nthreads}', '-model', temp_file_path], capture_output=True, timeout=timeout)
             if 'UNSATISFIABLE' in str(cp.stdout):
                 result.append(None)
             else:
