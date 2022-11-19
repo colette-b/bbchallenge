@@ -160,9 +160,9 @@ def create_instance(n, tm, accepted_start_configs=[('', ('A', '0'), '')]):
 
     return F, symbols[1], symbols[2], tr, acc
 
-def check_if_solved(n, tm):
-    F, symbols1, symbols1, tr, acc = create_instance(n, tm)
-    ret = run_glucose(1, F)
+def check_if_solved(n, tm, threads=1, accepted_start_configs=[('', ('A', '0'), '')]):
+    F, symbols1, symbols1, tr, acc = create_instance(n, tm, accepted_start_configs=accepted_start_configs)
+    ret = run_glucose(threads, F)
     return type(ret) is list
 
 if __name__ == '__main__':
