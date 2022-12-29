@@ -5,6 +5,11 @@ import random
 from paths import GLUCOSE_PATH, TEMPFILE_DIR
 
 def run_glucose(nthreads, formula, glucose_path=GLUCOSE_PATH, timeout=2e6):
+    ''' runs glucose on given formula, number of threads and timeout given in seconds
+        return value is:
+        - 'timeout' if timeout happened,
+        - None if unsat,
+        - array e.g. [-1, 2, 3] if sat, where signs describe the assignment '''
     temp_file_path = f'{TEMPFILE_DIR}temp{random.randint(0, 10**10)}.txt'
     os.mkfifo(temp_file_path)
     result = []
