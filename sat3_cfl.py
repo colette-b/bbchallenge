@@ -1,11 +1,9 @@
+import random
 from pysat.solvers import Glucose3, Lingeling, Glucose4, Minisat22, Cadical, Mergesat3
 from pysat.formula import CNF
 from pysat.card import *
 from tm_utils import *
-from sat2_utils import *
-from cfl_dfa import *
 from db_utils import get_machine_i, get_indices_from_index_file
-import random
 from glucose_wrapper import run_glucose
 
 class IdxManager:
@@ -165,18 +163,6 @@ def check_if_solved(n, tm, threads=1, accepted_start_configs=[('', ('A', '0'), '
     ret = run_glucose(threads, F)
     return type(ret) is list
 
-if __name__ == '__main__':
-    from db_utils import get_machine_i
-    from glucose_wrapper import *
-    idx = 3369312
-    tm = TM(get_machine_i(idx))
-    F, symbols1, symbols1, tr, acc = create_instance(4, tm)
-    print('OK')
-    #with open('./instance.txt', 'w') as fil:
-    #    F.to_fp(fil)
-    ret = run_glucose(1, F)
-
-'''
 def model_to_short_description(raw_model, symbols1, symbols2, tr, acc):
     model = dict()
     for x in raw_model:
@@ -196,6 +182,5 @@ def model_to_short_description(raw_model, symbols1, symbols2, tr, acc):
     for i, j, s in acc:
         if not model[acc[i, j, s]]:
             continue
-        acc_arr.append(i + '-' + s + '-' + str(symbols2.index(j)))
+        acc_arr.append(i + '-' + (s[0].lower() if s[1]=='0' else s[0].upper()) + '-' + str(symbols2.index(j)))
     return dfa_arr1, dfa_arr2, acc_arr
-'''

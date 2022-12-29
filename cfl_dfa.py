@@ -102,8 +102,9 @@ if __name__ == '__main__':
     # example 1
     sample_machine_code1 = '1RB0LD_1LC1RC_1LA0RC_---0LE_0RB1LD'
     tm1 = TM(sample_machine_code1)
+    cased_tm_symbols = 'aAbBcCdDeE'
     # (0|11)* (a1 | 1A | 0b | 1B | c | C | D | e0 | 1E) .*
-    machine_pair_list1 = {s: [] for s in TM.tm_symbols}
+    machine_pair_list1 = {s: [] for s in cased_tm_symbols}
     machine_pair_list1['a'].append((dfa_from_regex('0*(0|11)*'),       dfa_from_regex('0*(0|1)*1')))
     machine_pair_list1['A'].append((dfa_from_regex('0*(0|11)*1'),      dfa_from_regex('0*(0|1)*')))
     machine_pair_list1['b'].append((dfa_from_regex('0*(0|11)*0'),      dfa_from_regex('0*(0|1)*')))
@@ -118,7 +119,7 @@ if __name__ == '__main__':
     # example 2
     sample_machine_code2 = '1RB1RC_1LB1RA_1LD1LD_0RE0RD_1LB---'
     tm2 = TM(sample_machine_code2)
-    machine_pair_list2 = {s: [] for s in TM.tm_symbols}
+    machine_pair_list2 = {s: [] for s in cased_tm_symbols}
     machine_pair_list2['a'].append((dfa_from_regex('0*'),       dfa_from_regex('0*')))
     machine_pair_list2['A'].append((dfa_from_regex('0*1'),      dfa_from_regex('0*1*')))
     machine_pair_list2['b'].append((dfa_from_regex('0*10*'),    dfa_from_regex('0*1*')))

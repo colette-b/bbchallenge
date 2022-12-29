@@ -3,10 +3,10 @@ import threading
 import queue
 import time
 import random
+from tqdm import tqdm
 from db_utils import *
 import sat2_utils
 from sat3_cfl import *
-from tqdm import tqdm
 from glucose_wrapper import *
 from paths import TEMPFILE_DIR, UNDECIDED_INDEX
 from test2 import analyze
