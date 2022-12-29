@@ -6,12 +6,13 @@ from tm_utils import *
 from tqdm import tqdm
 from paths import MACHINES_DB_FILE, CTL_PROOF_FILE, UNDECIDED_INDEX
 
-def get_machine_i(i, db_has_header=True):
-    machine_db_path = MACHINES_DB_FILE
-    with open(machine_db_path, "rb") as f:
+def get_machine_i(i, db_has_header=True, get_bytes=False):
+    with open(MACHINES_DB_FILE, "rb") as f:
         c = 1 if db_has_header else 0
         f.seek(30*(i+c))
         b = f.read(30)
+        if get_bytes:
+            return b
     s = ''
     for j in range(10):
         part = chr(ord('0') + b[3*j + 0]) + \

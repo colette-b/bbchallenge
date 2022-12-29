@@ -8,7 +8,6 @@ class Tm_utils_test(unittest.TestCase):
         self.assertEqual(tm.code, sample_machine_code)
         self.assertEqual(tm.tm_state_count, 5)
         self.assertEqual(tm.tape_symbol_count, 2)
-        self.assertEqual(tm.tm_symbols, 'aAbBcCdDeE')
         self.assertEqual(
             tm.get_transition_info('a'),
             ('1', 'R', 'B')
@@ -31,7 +30,6 @@ class Tm_utils_test(unittest.TestCase):
         tm = TM(sample_machine_code)
         self.assertEqual(tm.tm_state_count, 3)
         self.assertEqual(tm.tape_symbol_count, 2)
-        self.assertEqual(tm.tm_symbols, 'aAbBcC')
 
     def test_basics3(self):
         sample_machine_code = '1RB0RB2RC_1RC2LA0LB_1RB---2RA'
