@@ -93,23 +93,13 @@ def mode_idx():
         tm_code = args.machine_code
     print(tm_code)
     tm = TM(tm_code)
-    #L1 = [] # [[''], ['1']]
-    #L2 = [] # [[''], ['1']]
-    #L1, L2 = analyze(tm)
-    #print(f'{L1=}')
-    #print(f'{L2=}')
-    #print(f'{len(L1)=}')
-    #print(f'{len(L2)=}')
-    #F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, wordheurestics=(L1, L2), mode=args.prooftype)
-    if args.additional_acc:
-        additional_acc = eval(args.additional_acc)
-    else:
-        additional_acc = []
-    F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, additional_acc=additional_acc, mode=args.prooftype)
+    F, symbols1, symbols2, tr, acc = create_instance(args.n, tm)
     if args.instance_path:
         with open(args.instance_path, 'w') as fil:
             F.to_fp(fil)
         print(f'written instance to file {args.instance_path}')
+    result = run_glucose(1, F, timeout=args.timeout)
+    print('unsat' if result is None else result)
 
 if __name__ == '__main__':
     print(args)
