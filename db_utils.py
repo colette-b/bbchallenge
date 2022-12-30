@@ -78,3 +78,8 @@ def proof_file_info(path=CTL_PROOF_FILE):
     for n, count in counts:
         print(f'solved with param {n=}: {count}\tleft: {unsolved[n]}\t{round(100 * count / (count + unsolved[n]), 1)} percent success rate')
     print('left unsolved:        ', len(infodict) - sum(solved.values()))
+
+def all_undecided():
+    all_indexed = get_indices_from_index_file(UNDECIDED_INDEX)
+    infodict = read_proof_file()
+    return [idx for idx in all_indexed if not is_already_solved(idx, infodict)]
