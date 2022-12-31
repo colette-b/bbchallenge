@@ -37,7 +37,13 @@ def op_or(idxmanager, cnf, variables):
     else:
         return op_or(idxmanager, cnf, [op_or(idxmanager, cnf, [variables[0], variables[1]])] + variables[2:])
 
-def create_instance(n, tm, accepted_start_configs=[('', ('A', '0'), '')]):
+def op_eq(idxmanager, cnf, var1, var2):
+    return op_or(idxmanager, cnf, [
+        op_and(idxmanager, cnf, [var1, var2]),
+        op_and(idxmanager, cnf, [-var1, -var2])
+    ])
+
+def create_instance(n, tm, accepted_start_configs=[('', ('A', '0'), '')], force_symmetric=False):
     ''' mode='vanilla' for the usual CTL,
         mode='coctl' for coCTL '''
     im = IdxManager()
@@ -49,7 +55,13 @@ def create_instance(n, tm, accepted_start_configs=[('', ('A', '0'), '')]):
     r = dict()
     # define variables
     tr = { (i, j, b): im.get() for i in symbols[1] for j in symbols[1] for b in tm.tape_symbols }
-    tr.update( {(i, j, b): im.get() for i in symbols[2] for j in symbols[2] for b in tm.tape_symbols } )
+    if force_symmetric:
+        for i in range(n):
+            for j in range(n):
+                for b in tm.tape_symbols:
+                    tr[str(i + n), str(j + n), b] = tr[str(i), str(j), b]
+    else:
+        tr.update( {(i, j, b): im.get() for i in symbols[2] for j in symbols[2] for b in tm.tape_symbols } )
     acc = { (i, j, s): im.get() for i in symbols[1] for j in symbols[2] for s in tm.combo_symbols }
     r[1] = {(i, t): im.get() for i in symbols[1] for t in range(-1, 2*n)}
     r[2] = {(i, t): im.get() for i in symbols[2] for t in range(-1, 2*n)}

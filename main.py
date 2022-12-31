@@ -21,6 +21,8 @@ parser.add_argument('--machine_code')
 parser.add_argument('--instance_path')
 parser.add_argument('--additional_acc')
 parser.add_argument('--prooftype', default='vanilla')
+parser.add_argument('--force_symmetric', action='store_true')
+
 args = parser.parse_args()
 
 csat, cunsat, ctimeout = 0, 0, 0
@@ -35,7 +37,7 @@ def worker():
         tm_code = get_machine_i(idx)
         time1half = time.time()
         tm = TM(tm_code)
-        F, symbols1, symbols2, tr, acc = create_instance(args.n, tm)
+        F, symbols1, symbols2, tr, acc = create_instance(args.n, tm, force_symmetric=args.force_symmetric)
         time2 = time.time()
         result = run_glucose(1, F, timeout=args.timeout)
         time3 = time.time()
@@ -70,6 +72,7 @@ def worker():
         )
 
 def mode_database():
+    print(f'{args.force_symmetric = }')
     global pbar
     all_unsolved = get_indices_from_index_file(UNDECIDED_INDEX)
     infodict = read_proof_file()
