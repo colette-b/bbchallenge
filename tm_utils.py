@@ -128,3 +128,7 @@ class TM:
             left_tape, combo_state, right_tape = self.simulation_step(left_tape, combo_state, right_tape)
         img = img.resize((width, 1000), Image.NEAREST)
         img.save(pathname)
+
+def combo_symbol_to_char(combo_symb):
+    tm_symb, tape_symb = combo_symb
+    return tm_symb.lower() if tape_symb=='0' else tm_symb.upper()
