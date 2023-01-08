@@ -35,11 +35,11 @@ def empty_word_machine():
 
 def add_null_symbol(dfa, new_symbol):
     assert new_symbol not in dfa.input_symbols
-    null_state = str(random.randint(1000, 1e8)) # ''.join([random.choice(string.ascii_lowercase) for _ in range(10)])
+    null_state = str(random.randint(1000, 1e15))
     assert null_state not in dfa.states
-    new_transitions = copy.deepcopy(dfa.transitions)
+    new_transitions = dict()
     for state in dfa.states:
-        new_transitions[state][new_symbol] = null_state
+        new_transitions[state] = dfa.transitions[state] | {new_symbol: null_state}
     new_transitions[null_state] = {symbol: null_state for symbol in dfa.input_symbols.union({new_symbol})}
     return DFA(
         states = dfa.states.union({null_state}),
@@ -100,3 +100,33 @@ def dfa_from_regex(regex):
         if s not in dfa.input_symbols:
             dfa = add_null_symbol(dfa, s)
     return dfa
+
+def smallest_word(dfa):
+    return dfa.random_word(dfa.minimum_word_length())
+
+def dfa_to_array(dfa):
+    def r(x):
+        if x == dfa.initial_state:
+            return 0
+        if x == 0:
+            return dfa.initial_state
+        return x
+    arr = []
+    for j in range(len(dfa.states)):
+        arr.append(r(dfa.transitions[r(j)]['0']))
+        arr.append(r(dfa.transitions[r(j)]['1']))
+    return arr
+
+def dfa_from_array(arr):
+    assert len(arr) % 2 == 0
+    n = len(arr) // 2
+    return DFA(
+        states = set(i for i in range(n)),
+        input_symbols = {'0', '1'},
+        transitions = {
+            i : {'0': arr[2*i], '1': arr[2*i + 1]}
+            for i in range(n)
+        },
+        initial_state = 0,
+        final_states = set()
+    )
