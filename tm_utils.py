@@ -11,6 +11,10 @@
 import copy
 import math
 
+def combo_symbol_to_char(combo_symb):
+    tm_symb, tape_symb = combo_symb
+    return tm_symb.lower() if tape_symb=='0' else tm_symb.upper()
+
 class TM:
     def __init__(self, code):
         if '---' in code:
@@ -129,6 +133,17 @@ class TM:
         img = img.resize((width, 1000), Image.NEAREST)
         img.save(pathname)
 
-def combo_symbol_to_char(combo_symb):
-    tm_symb, tape_symb = combo_symb
-    return tm_symb.lower() if tape_symb=='0' else tm_symb.upper()
+    def as_grammar_rules(self):
+        rules = []
+        for tm_symb, tape_symb in self.combo_symbols:
+            s = tm_symb.upper() if tape_symb=='1' else tm_symb.lower()
+            if self.is_final(s):
+                continue
+            new_bit, direction, new_tm_symb = self.get_transition_info(s)
+            if direction == 'R':
+                rules.append((s + '0', new_bit + new_tm_symb.lower()))
+                rules.append((s + '1', new_bit + new_tm_symb.upper()))
+            if direction == 'L':
+                rules.append(('0' + s, new_tm_symb.lower() + new_bit))
+                rules.append(('1' + s, new_tm_symb.upper() + new_bit))
+        return rules
