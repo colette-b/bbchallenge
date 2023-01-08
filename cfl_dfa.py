@@ -15,14 +15,27 @@ import sys
 # describe the inference in terms of new DFAs,
 # check whether the result is already in L,
 # if not then add entries to machine_pair_list.
-def is_already_covered(symbol, F, G, machine_pair_list, bonus_info=False):
-    small = concatenate(concatenate(F, dfa_from_regex(symbol)), reverse(G))
+
+def mpl_accept(mpl, left, symb, right):
+    for F, G in mpl[symb]:
+        if F.accepts_input(left) and G.accepts_input(right):
+            return True
+    return False
+
+def big_symb_machine(mpl, symbol):
     big = add_null_symbol(empty_language_machine(), symbol)
-    for Fi, Gi in machine_pair_list[symbol]:
+    for Fi, Gi in mpl[symbol]:
         machine_part = concatenate(concatenate(Fi, dfa_from_regex(symbol)), reverse(Gi))
         big = big.union(machine_part)
+    return big
+
+def is_already_covered(symbol, F, G, machine_pair_list, bonus_info=False, big=None):
+    small = concatenate(concatenate(F, dfa_from_regex(symbol)), reverse(G))
+    if big is None:
+        big = big_symb_machine(machine_pair_list, symbol)
+    # print(small.input_symbols, big.input_symbols)
     if bonus_info:
-        return small.issubset(big), to_regex(small.difference(big))
+        return small.issubset(big), small.difference(big)
     else:
         return small.issubset(big)
 
@@ -32,28 +45,47 @@ def expand(symbol, F, G, tm):
         G0 = cutoff_last(G, '0')
         G1 = cutoff_last(G, '1')
         F_ = concatenate(F, dfa_from_regex(b))
-        return [(s.lower(), F_, G0), (s.upper(), F_, G1)]
+        items = [(s.lower(), F_, G0), (s.upper(), F_, G1)]
     if direction == 'L':
         F0 = cutoff_last(F, '0')
         F1 = cutoff_last(F, '1')
         G_ = concatenate(G, dfa_from_regex(b))
-        return [(s.lower(), F0, G_), (s.upper(), F1, G_)]
+        items = [(s.lower(), F0, G_), (s.upper(), F1, G_)]
+    return [(char, F, G) for (char, F, G) in items if (not F.isempty()) and (not G.isempty())]
+
+def is_accepting_some_initial_config(mpl, tm, max_idx=1000):
+    # check that some initial configuration is accepted
+    left, s, right = '', 'a', ''
+    for idx in range(1000):
+        if mpl_accept(mpl, left, s, right):
+            return True, idx
+        left, s, right = tm.simulation_step(left, s, right)
+        s = combo_symbol_to_char(s)
+    return False, -1
 
 def check_if_solution(machine_pair_list, tm, verbose=True):
+    tf, idx = is_accepting_some_initial_config(machine_pair_list, tm)
+    if not tf:
+        if verbose:
+            print('mpl doesnt accept any initial config')
+        return False
     for s in machine_pair_list:
         if tm.is_final(s) and len(machine_pair_list[s]) > 0:
             print(f'{s} is final symbol for this TM, but machine pair list contains entry for {s}')
             return False
+        bigs = {s: big_symb_machine(machine_pair_list, s) for s in machine_pair_list}
         for F, G in machine_pair_list[s]:
             for s_, F_, G_ in expand(s, F, G, tm):
-                contained, error_regex = is_already_covered(s_, F_, G_, machine_pair_list, bonus_info=True)
+                contained, error_part = is_already_covered(s_, F_, G_, machine_pair_list, bonus_info=True, big=bigs[s_])
                 if not contained:
                     if verbose:
                         print('the following is in machine_pair_list:')
                         print(s, dfa_info(F), dfa_info(G))
                         print('thus the following should be, but is not covered:')
                         print(s_, dfa_info(F_), dfa_info(G_))
-                        print('difference regex:', error_regex)
+                        print('difference regex:', to_regex(error_part))
+                        for _ in range(3):
+                            print(smallest_word(error_part))
                         return False, (s_, F_, G_)
     return True, None
 
