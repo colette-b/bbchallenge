@@ -130,3 +130,8 @@ def dfa_from_array(arr):
         initial_state = 0,
         final_states = set()
     )
+
+def dfa_has_sink_state(arr):
+    assert len(arr) % 2 == 0
+    n = len(arr) // 2
+    return any(arr[2*j]==j and arr[2*j+1]==j for j in range(n))

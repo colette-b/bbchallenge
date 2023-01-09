@@ -29,6 +29,11 @@ csat, cunsat, ctimeout = 0, 0, 0
 q = queue.Queue()
 pbar = None
 
+def check_and_save_result(result, symbols1, symbols2, tr, acc, tm, idx):
+    arr1, arr2, acc_arr = model_to_short_description(result, symbols1, symbols2, tr, acc)
+    sat2_utils.verify_short_description(arr1, arr2, acc_arr, tm)
+    write_to_proof_file(idx, args.n, f'{(arr1, arr2, acc_arr)}')
+
 def worker():
     global csat, cunsat, ctimeout
     while True:
@@ -43,9 +48,7 @@ def worker():
         time3 = time.time()
         if result:
             if result != 'timeout':
-                arr1, arr2, acc_arr = model_to_short_description(result, symbols1, symbols2, tr, acc)
-                sat2_utils.verify_short_description(arr1, arr2, acc_arr, tm)
-                write_to_proof_file(idx, args.n, f'{(arr1, arr2, acc_arr)}')
+                check_and_save_result(result, symbols1, symbols2, tr, acc, tm, idx)
         else:
             write_to_proof_file(idx, args.n, 'unsat')
         pbar.update(1)
@@ -102,6 +105,9 @@ def mode_idx():
             F.to_fp(fil)
         print(f'written instance to file {args.instance_path}')
     result = run_glucose(1, F, timeout=args.timeout)
+    if result:
+        if result != 'timeout':
+            check_and_save_result(result, symbols1, symbols2, tr, acc, tm, args.idx)
     print('unsat' if result is None else result)
 
 if __name__ == '__main__':

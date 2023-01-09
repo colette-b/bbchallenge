@@ -5,6 +5,7 @@ from sat2_utils import verify_short_description
 from tm_utils import *
 from tqdm import tqdm
 from paths import MACHINES_DB_FILE, CTL_PROOF_FILE, UNDECIDED_INDEX
+from automata_utils import dfa_has_sink_state
 
 def get_machine_i(i, db_has_header=True, get_bytes=False):
     with open(MACHINES_DB_FILE, "rb") as f:
@@ -38,6 +39,8 @@ def read_proof_file(path=CTL_PROOF_FILE, verify=False):
         idx;n;unsat, which means an attempt with parameter n has failed, or
         idx;n;(arr1, arr2, acc), which means a successful solution was produced. '''
     infodict = defaultdict(dict)
+    total_dfas_seen = 0
+    total_dfas_with_sink_state = 0
     with open(path, 'r') as f:
         for line in tqdm(f):
             idx, n, result = line[:-1].split(';')
@@ -46,8 +49,13 @@ def read_proof_file(path=CTL_PROOF_FILE, verify=False):
             infodict[idx][n] = result
             if result!='unsat' and verify:
                 arr1, arr2, acc_arr = eval(result)
+                total_dfas_seen += 2
+                total_dfas_with_sink_state += dfa_has_sink_state(arr1)
+                total_dfas_with_sink_state += dfa_has_sink_state(arr2)
                 tm_code = get_machine_i(idx)
                 verify_short_description(arr1, arr2, acc_arr, TM(tm_code))
+    print(f'{total_dfas_seen = }')
+    print(f'{total_dfas_with_sink_state = }')
     return infodict
 
 def is_already_solved(idx, infodict):
