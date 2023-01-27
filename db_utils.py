@@ -33,7 +33,7 @@ def get_indices_from_index_file(index_file_path):
             machines_indices.append(int.from_bytes(chunk, byteorder="big"))
     return machines_indices
 
-def read_proof_file(path=CTL_PROOF_FILE, verify=False):
+def read_proof_file(path=CTL_PROOF_FILE, verify=False, dvf_file_path=None):
     ''' proof file format:
         each line is of the form
         idx;n;unsat, which means an attempt with parameter n has failed, or
@@ -41,6 +41,10 @@ def read_proof_file(path=CTL_PROOF_FILE, verify=False):
     infodict = defaultdict(dict)
     total_dfas_seen = 0
     total_dfas_with_sink_state = 0
+    if dvf_file_path is not None:
+        dvf = open(dvf_file_path, 'wb')
+        dvf.write((0).to_bytes(4, byteorder='big', signed=False))    # this should be number of proofs; will be overwritten later
+        dvf_proofs = 0
     with open(path, 'r') as f:
         for line in tqdm(f):
             idx, n, result = line[:-1].split(';')
@@ -54,8 +58,19 @@ def read_proof_file(path=CTL_PROOF_FILE, verify=False):
                 total_dfas_with_sink_state += dfa_has_sink_state(arr2)
                 tm_code = get_machine_i(idx)
                 verify_short_description(arr1, arr2, acc_arr, TM(tm_code))
+                if dvf_file_path is not None:
+                    dvf.write(idx.to_bytes(4, byteorder='big', signed=False))
+                    dvf.write((10).to_bytes(4, byteorder='big', signed=False))          # decider type
+                    dvf.write((2*n + 1).to_bytes(4, byteorder='big', signed=False))     # length of decider-specific info
+                    dvf.write(bytearray([0]))                                           # direction
+                    dvf.write(bytearray(arr1))
+                    dvf_proofs += 1
     print(f'{total_dfas_seen = }')
     print(f'{total_dfas_with_sink_state = }')
+    if dvf_file_path is not None:
+        dvf.seek(0)
+        dvf.write(dvf_proofs.to_bytes(4, byteorder='big', signed=False))
+        dvf.close()
     return infodict
 
 def is_already_solved(idx, infodict):

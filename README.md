@@ -19,3 +19,9 @@ Then run the solver. There are two work modes.
 `python3 main.py index 10 3 999 --idx=5884059` 
 
 - To run on a set of machines: `python3 main.py database 10 3 999` - this will try to solve all machines using DFAs of size 10, again 3 is number of threads, and 999 is timeout in seconds. The script tries to avoid unnecessary work, i.e. if solution database already contains a proof, then the particular machine is skipped.
+
+- to verify the proof file once again, and produce a DVF format (compatible with TonyGuil's verifier), run the following code:
+    ```
+    from db_utils import *
+    read_proof_file(verify=True, dvf_file_path='./datafiles/proofs.dvf')
+    ```
