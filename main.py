@@ -9,7 +9,6 @@ import sat2_utils
 from sat3_cfl import *
 from glucose_wrapper import *
 from paths import TEMPFILE_DIR, UNDECIDED_INDEX
-from test2 import analyze
 
 parser = argparse.ArgumentParser()
 parser.add_argument('mode', choices=['database', 'index'], default='database')
