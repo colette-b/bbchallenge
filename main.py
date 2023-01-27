@@ -104,7 +104,7 @@ def mode_idx():
         with open(args.instance_path, 'w') as fil:
             F.to_fp(fil)
         print(f'written instance to file {args.instance_path}')
-    result = run_glucose(1, F, timeout=args.timeout)
+    result = run_glucose(args.threads, F, timeout=args.timeout)
     if result:
         if result != 'timeout':
             check_and_save_result(result, symbols1, symbols2, tr, acc, tm, args.idx)
