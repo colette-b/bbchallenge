@@ -1,5 +1,5 @@
 # path to glucose solver executable
-GLUCOSE_PATH = '/home/konrad/Desktop/coding/solvers/glucose-4.2.1/sources/parallel/glucose-syrup_static'
+GLUCOSE_PATH = '/usr/bin/glucose-syrup'
 # some empty directory
 TEMPFILE_DIR = './tempfiles/'
 # undecided index
