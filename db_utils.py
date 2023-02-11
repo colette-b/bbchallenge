@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 import fcntl
-from sat2_utils import verify_short_description
+from sat2_utils import verify_short_description, verify_dfa_pair
 from tm_utils import *
 from tqdm import tqdm
 from paths import MACHINES_DB_FILE, CTL_PROOF_FILE, UNDECIDED_INDEX
@@ -57,6 +57,7 @@ def read_proof_file(path=CTL_PROOF_FILE, verify=False, dvf_file_path=None):
                 total_dfas_with_sink_state += dfa_has_sink_state(arr1)
                 total_dfas_with_sink_state += dfa_has_sink_state(arr2)
                 tm_code = get_machine_i(idx)
+                assert verify_dfa_pair(arr1, arr2, TM(tm_code))
                 verify_short_description(arr1, arr2, acc_arr, TM(tm_code))
                 if dvf_file_path is not None:
                     dvf.write(idx.to_bytes(4, byteorder='big', signed=False))

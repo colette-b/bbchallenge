@@ -112,7 +112,6 @@ def verify_dfa_pair(arr1, arr2, tm):
     acc = set()
     acc.add('0-a-0')
     while True:
-        print(len(acc))
         new_acc = fill_step(acc)
         if new_acc is None:
             return False
