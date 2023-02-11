@@ -83,3 +83,41 @@ def verify_short_description(arr1, arr2, acc, tm):
                     if arr1[2*i + int(b)] == l:
                         corr = f'{i}-{new_tm_symb.lower() if b=="0" else new_tm_symb.upper()}-{arr2[2*r + int(new_bit)]}'
                         assert corr in acc
+
+def verify_dfa_pair(arr1, arr2, tm):
+    assert arr1[0] == 0
+    assert arr2[0] == 0
+
+    def fill_step(acc):
+        new_acc = copy.deepcopy(acc)
+        for item in acc:
+            l, s, r = item.split('-')
+            l, r = int(l), int(r)
+            if tm.is_final(s):
+                return None
+            new_bit, direction, new_tm_symb = tm.get_transition_info(s)
+            for b in ['0', '1']:
+                if direction == 'R':
+                    for j in range(len(arr2) // 2):
+                        if arr2[2*j + int(b)] == r:
+                            corr = f'{arr1[2*l + int(new_bit)]}-{new_tm_symb.lower() if b=="0" else new_tm_symb.upper()}-{j}'
+                            new_acc.add(corr)
+                if direction == 'L':
+                    for i in range(len(arr1) // 2):
+                        if arr1[2*i + int(b)] == l:
+                            corr = f'{i}-{new_tm_symb.lower() if b=="0" else new_tm_symb.upper()}-{arr2[2*r + int(new_bit)]}'
+                            new_acc.add(corr)
+        return new_acc
+    
+    acc = set()
+    acc.add('0-a-0')
+    while True:
+        print(len(acc))
+        new_acc = fill_step(acc)
+        if new_acc is None:
+            return False
+        if len(new_acc) == len(acc):
+            return True
+        acc = new_acc
+    
+        
