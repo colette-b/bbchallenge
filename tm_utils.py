@@ -147,3 +147,19 @@ class TM:
                 rules.append(('0' + s, new_tm_symb.lower() + new_bit))
                 rules.append(('1' + s, new_tm_symb.upper() + new_bit))
         return rules
+
+    def as_arrowed_rules(self):
+        if not hasattr(self, 'rules'):
+            rules = []
+            for tm_symb, tape_symb in self.combo_symbols:
+                if self.is_final(tm_symb, tape_symb):
+                    continue
+                new_bit, direction, new_tm_symb = self.get_transition_info(tm_symb, tape_symb)
+                if direction == 'R':
+                    res = f'{new_bit}{new_tm_symb}>'
+                else:
+                    res = f'<{new_tm_symb}{new_bit}'
+                rules.append((f'{tm_symb}>{tape_symb}', res))
+                rules.append((f'{tape_symb}<{tm_symb}', res))
+            self.rules = rules
+        return self.rules
