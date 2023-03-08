@@ -52,5 +52,9 @@ class Tm_utils_test(unittest.TestCase):
             iteration += 1
         self.assertEqual(iteration, 2133492)
 
+    def test_arrowed_sim(self):
+        tm = TM('1RB1RA_1LC1LB_0RD0LC_1RE---_0RA1RA')   # 8210683
+        self.assertEqual(tm.arrowed_sim('0010A>000101'), '0D>111111111')
+
 if __name__ == '__main__':
     unittest.main()

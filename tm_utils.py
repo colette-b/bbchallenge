@@ -163,3 +163,16 @@ class TM:
                 rules.append((f'{tape_symb}<{tm_symb}', res))
             self.rules = rules
         return self.rules
+
+    def arrowed_sim(self, s, maxsteps=10**9, break_function=lambda i, s: False):
+        for i in range(maxsteps):
+            if break_function(i, s):
+                return
+            flag = False
+            for pre, res in self.as_arrowed_rules():
+                if pre in s:
+                    s = s.replace(pre, res)
+                    flag = True
+                    break
+            if not flag:
+                return s
